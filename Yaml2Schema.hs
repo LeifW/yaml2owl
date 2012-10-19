@@ -11,11 +11,17 @@ import Data.Map (Map, toList)
 
 import Network.URI
 
+import Data.Set (fromList)
+
 import Swish.RDF
-import Swish.Utils.Namespace (ScopedName, makeScopedName)
+--import Swish.Utils.Namespace (ScopedName, makeScopedName)
+import Swish.Namespace
+import Swish.QName (newLName)
+import Data.Maybe (fromJust)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
-import Swish.RDF.TurtleFormatter
+--import Swish.RDF.TurtleFormatter
+import Swish.RDF.Formatter.Turtle
 
 type TextMap = Map Text
 type MapMap = TextMap (TextMap Text)
@@ -25,7 +31,8 @@ url domain path = URI "http:" (Just $ URIAuth "" domain "") ('/':path) "" ""
 
 domain / path = url domain path
 
-ex = makeScopedName (Just "ex") ("example.org"/"scheme#")
+--ex :: Text -> ScopedName
+ex lname = makeScopedName (Just "ex") ("example.org"/"scheme#") (fromJust $ newLName lname)
 
 resolve :: Text -> ScopedName
 resolve n = case splitOn ":" n of
@@ -42,7 +49,7 @@ parseYaml :: FilePath -> IO (Maybe MapMap)
 parseYaml = decodeFile
 
 json2graph :: MapMap -> RDFGraph
-json2graph = toRDFGraph . nub . json2triples
+json2graph = toRDFGraph . fromList .  json2triples
 
 json2triples :: MapMap -> [RDFTriple]
 json2triples m = do
@@ -73,7 +80,7 @@ do
 
 main = do
   m <- decodeFile "schema.yml"::IO (Maybe MapMap)
-  let g = maybe (error "Invalid yaml") (toRDFGraph . nub . json2triples) m
+  let g = maybe (error "Invalid yaml") (toRDFGraph . fromList . json2triples) m
   print g
   putStrLn ""
   putStrLn $ unpack $ formatGraphAsText g

@@ -13,13 +13,15 @@ import Data.Map (Map, toList)
 import Network.URI
 
 import Swish.RDF
-import Swish.Utils.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
-import Swish.Utils.LookupMap (listLookupMap)
+--import Swish.Utils.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
+import Swish.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
+--import Swish.Utils.LookupMap (listLookupMap)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
-import Swish.RDF.TurtleFormatter
+import Swish.RDF.Formatter.Turtle
 
-import Swish.RDF.RDFQuery -- (rdfFindValSubj, rdfFindPredVal)
+--import Swish.RDF.RDFQuery -- (rdfFindValSubj, rdfFindPredVal)
+import Swish.RDF.Query -- (rdfFindValSubj, rdfFindPredVal)
 
 import System.Directory
 import System.FilePath( (</>), (<.>) )
@@ -42,7 +44,7 @@ classesOf = instancesOf resRdfsClass
 xmlns prefix = Attr $ QName prefix Nothing (Just "xmlns")
 
 data Subject = Subject {
-  name :: String,
+  name :: ScopedName,
   dataProps :: [(String, String, String)],
   objectProps :: [(String, String)]
 } deriving (Show, Eq)
@@ -57,7 +59,7 @@ classNames g = [ getScopeLocal sn | Res sn <- classesOf g ]
 
 classInfos g = map classInfo $ classesOf g
   where
-    classInfo klass = Subject (unpack $ toLower $ localName klass) dataProps' objectProps'
+    classInfo klass = Subject (getScopedName klass) dataProps' objectProps'
       where
         props = rdfFindValSubj resRdfsDomain klass g
         graphDataProps = rdfFindValSubj resRdfType (Res owlDatatypeProperty) g
@@ -66,7 +68,10 @@ classInfos g = map classInfo $ classesOf g
         objectProps' = [ (show p, unpack $ localName p)  | p <- objectProperties ]
           
       
-localName (Res r) = getScopeLocal r
+--    classInfo klass = Subject (unpack $ toLower $ localName klass) dataProps' objectProps'
+
+--localName (Res r) = getScopeLocal r
+localName = getScopeLocal . getScopedName
 
 {-    
 classInfos g = do
@@ -81,43 +86,51 @@ layout prefixes content =
     unode "body" content
   ])
 
-page :: [Attr] -> Subject -> Element
-page prefixes (Subject name dataProps objectProps) = unode "html" (prefixes, [
-    unode "head" (),
-    unode "body" [
-      unode "div" [
-        unode "p" [
-          unode "b" (l ++ ":"),
-          unode "span" [property p, datatype t] 
-        ]
-      | (p, l, t) <- dataProps ],
-      unode "div" [
-        unode "p" ([rel p], [
-          Text $ blank_cdata {cdData = (l ++ ":")},
-          Elem $ unode "a" (href "_", unode "span" (property "rdfs:label"))
-        ])
-      | (p, l) <- objectProps ]
-    ]
+index :: Subject -> [Element]
+index subject =
+  [
+    unode "div" ([about ("[" ++ show (name subject) ++ "]"), rev "rdf:type"], individual subject)
+  ]
+
+individual :: Subject -> [Element]
+individual (Subject name dataProps objectProps) =
+  [
+    unode "div" [
+      unode "p" [
+        unode "b" (l ++ ":"),
+        unode "span" [property p, datatype t] 
+      ]
+    | (p, l, t) <- dataProps ],
+    unode "div" [
+      unode "p" ([rel p], [
+        Text $ blank_cdata {cdData = (l ++ ":")},
+        Elem $ unode "a" (href "_", unode "span" (property "rdfs:label"))
+      ])
+    | (p, l) <- objectProps ]
+  ]
   --map (unode "span" . property . fst) dataProps)
-  ])
-  where
-    attr name = Attr (unqual name)
-    rel = attr "rel"
-    rev = attr "rev"
-    href = attr "href"
-    about = attr "about"
-    resource = attr "resource"
-    property = attr "property"
-    datatype = attr "datatype"
+
+attr name = Attr (unqual name)
+rel = attr "rel"
+rev = attr "rev"
+href = attr "href"
+about = attr "about"
+resource = attr "resource"
+property = attr "property"
+datatype = attr "datatype"
 
          -- 
-getGraph = fmap (json2graph . fromJust) $ parseYaml "schema.yml" 
+--getGraph = fmap (json2graph . fromJust) $ parseYaml "schema.yml" 
 
-scaffold:: [Attr] -> Subject -> IO ()
+label :: Subject -> String
+label = unpack . toLower . getScopeLocal . name
+
+scaffold :: [Attr] -> Subject -> IO ()
 scaffold prefixes subject = do
-  let dir = baseDir </> name subject
+  let dir = baseDir </> label subject
   mkDir dir
-  writeFile (dir </> "_wildcard" <.> "html") $ ppElement $ page prefixes subject
+  writeFile (dir </> "index" <.> "html") $ ppElement $ layout prefixes $ index subject
+  writeFile (dir </> "_wildcard" <.> "html") $ ppElement $ layout prefixes $ individual subject
 
 --  Just json <- parseYaml "schema.yml"
 main = do
@@ -127,4 +140,4 @@ main = do
   let prefixes = prefixesOf g
   let subjects = classInfos g
   mapM_ (scaffold prefixes) subjects
-  --putStrLn $ ppElement $ page g
+  putStrLn $ ppElement $ page g
