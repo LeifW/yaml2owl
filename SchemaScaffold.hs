@@ -14,7 +14,9 @@ import Network.URI
 
 import Swish.RDF
 --import Swish.Utils.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
-import Swish.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
+--import Swish.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
+import Swish.Namespace -- (ScopedName, getNamespaceTuple, getScopeLocal)
+import Swish.QName --(LName(..))
 --import Swish.Utils.LookupMap (listLookupMap)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
@@ -53,7 +55,9 @@ data DataProperty = DataProperty
 
 b = putStrLn $ ppElement $ unode "html" [xmlns "foaf" "http://foo.com"]
 
-prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- map getNamespaceTuple $ listLookupMap $ namespaces g ]
+prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- map getNamespaceTuple $ undefined $ namespaces g ]
+
+--ex lname = maybe (error $ "Invalid chars in local name: " ++ unpack lname) (makeScopedName (Just "ex") ("example.org"/"scheme#")) $ newLName lname
 
 classNames g = [ getScopeLocal sn | Res sn <- classesOf g ]
 
@@ -64,8 +68,8 @@ classInfos g = map classInfo $ classesOf g
         props = rdfFindValSubj resRdfsDomain klass g
         graphDataProps = rdfFindValSubj resRdfType (Res owlDatatypeProperty) g
         (dataProperties, objectProperties) = partition (\p-> elem p graphDataProps) props
-        dataProps' = [ (show p, unpack $ localName p, show $ head $ rdfFindPredVal p resRdfsRange g) | p <- dataProperties ]
-        objectProps' = [ (show p, unpack $ localName p)  | p <- objectProperties ]
+        dataProps' = [ (show p, (unpack . getLName . localName) p, show $ head $ rdfFindPredVal p resRdfsRange g) | p <- dataProperties ]
+        objectProps' = [ (show p, (unpack . getLName . localName) p)  | p <- objectProperties ]
           
       
 --    classInfo klass = Subject (unpack $ toLower $ localName klass) dataProps' objectProps'
@@ -140,4 +144,4 @@ main = do
   let prefixes = prefixesOf g
   let subjects = classInfos g
   mapM_ (scaffold prefixes) subjects
-  putStrLn $ ppElement $ page g
+  putStrLn $ ppElement $ layout g

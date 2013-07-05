@@ -17,7 +17,7 @@ import Swish.RDF
 --import Swish.Utils.Namespace (ScopedName, makeScopedName)
 import Swish.Namespace
 import Swish.QName (newLName)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromMaybe)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
 --import Swish.RDF.TurtleFormatter
@@ -31,8 +31,8 @@ url domain path = URI "http:" (Just $ URIAuth "" domain "") ('/':path) "" ""
 
 domain / path = url domain path
 
---ex :: Text -> ScopedName
-ex lname = makeScopedName (Just "ex") ("example.org"/"scheme#") (fromJust $ newLName lname)
+ex :: Text -> ScopedName
+ex lname = maybe (error $ "Invalid chars in local name: " ++ unpack lname) (makeScopedName (Just "ex") ("example.org"/"scheme#")) $ newLName lname
 
 resolve :: Text -> ScopedName
 resolve n = case splitOn ":" n of
@@ -80,7 +80,7 @@ do
 
 main = do
   m <- decodeFile "schema.yml"::IO (Maybe MapMap)
-  let g = maybe (error "Invalid yaml") (toRDFGraph . fromList . json2triples) m
+  let g = maybe (error "Invalid yaml") json2graph m
   print g
   putStrLn ""
   putStrLn $ unpack $ formatGraphAsText g
