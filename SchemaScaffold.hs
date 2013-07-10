@@ -1,42 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module SchemaScaffold  where
+module SchemaScaffold (prefixesOf, classInfos, scaffold) where
 
-import Data.List( partition, elem )
+import Data.List (partition)
 import Text.XML.Light
-import Data.Text (Text, splitOn, unpack, toLower)
-import qualified Data.Text.IO as TIO
-import Data.Yaml (decodeFile)
---import Data.HashMap.Strict (HashMap)
-import Data.Map (Map, toList)
-
-import Network.URI
+import Data.Text (unpack, toLower)
+import Data.Map (toList)
 
 import Swish.RDF
---import Swish.Utils.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
---import Swish.Namespace (ScopedName, getNamespaceTuple, getScopeLocal)
-import Swish.Namespace -- (ScopedName, getNamespaceTuple, getScopeLocal)
-import Swish.QName --(LName(..))
---import Swish.Utils.LookupMap (listLookupMap)
-import Swish.RDF.Vocabulary.XSD
+import Swish.Namespace (ScopedName, getScopeLocal)
+import Swish.QName (getLName)
 import Swish.RDF.Vocabulary.OWL
-import Swish.RDF.Formatter.Turtle
 
---import Swish.RDF.RDFQuery -- (rdfFindValSubj, rdfFindPredVal)
-import Swish.RDF.Query -- (rdfFindValSubj, rdfFindPredVal)
+import Swish.RDF.Query (rdfFindValSubj, rdfFindPredVal)
 
 import System.Directory
 import System.FilePath( (</>), (<.>) )
 
-import Data.Maybe (fromJust)
-
-
-import Yaml2Schema
 -- triple Subj Type Class
 
 -- putStrLn $ ppTopElement $ unode "html" (Attr (unqual "href") "google.com", unode "div" ())
 
-baseDir = "app"
 mkDir = createDirectoryIfMissing True
 
 
@@ -55,10 +39,7 @@ data DataProperty = DataProperty
 
 b = putStrLn $ ppElement $ unode "html" [xmlns "foaf" "http://foo.com"]
 
---prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- map getNamespaceTuple $ undefined $ namespaces g ]
 prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- toList $ namespaces g ]
-
---ex lname = maybe (error $ "Invalid chars in local name: " ++ unpack lname) (makeScopedName (Just "ex") ("example.org"/"scheme#")) $ newLName lname
 
 classNames g = [ getScopeLocal sn | Res sn <- classesOf g ]
 
@@ -75,7 +56,6 @@ classInfos g = map classInfo $ classesOf g
       
 --    classInfo klass = Subject (unpack $ toLower $ localName klass) dataProps' objectProps'
 
---localName (Res r) = getScopeLocal r
 localName = getScopeLocal . getScopedName
 
 {-    
@@ -124,25 +104,14 @@ resource = attr "resource"
 property = attr "property"
 datatype = attr "datatype"
 
-         -- 
 --getGraph = fmap (json2graph . fromJust) $ parseYaml "schema.yml" 
 
 label :: Subject -> String
 label = unpack . toLower . getLName . getScopeLocal . name
 
-scaffold :: [Attr] -> Subject -> IO ()
-scaffold prefixes subject = do
+scaffold :: String -> [Attr] -> Subject -> IO ()
+scaffold baseDir prefixes subject = do
   let dir = baseDir </> label subject
   mkDir dir
   writeFile (dir </> "index" <.> "html") $ ppElement $ layout prefixes $ index subject
   writeFile (dir </> "_wildcard" <.> "html") $ ppElement $ layout prefixes $ individual subject
-
---  Just json <- parseYaml "schema.yml"
-main = do
-  json <- decodeFile "schema.yml"
-  let g = maybe (error "Invalid YAML structure.") json2graph json
-  TIO.writeFile "schema.ttl" $ formatGraphAsText g
-  let prefixes = prefixesOf g
-  let subjects = classInfos g
-  mapM_ (scaffold prefixes) subjects
-  --putStrLn $ ppElement $ layout prefixes undefined

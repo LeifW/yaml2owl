@@ -1,26 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Yaml2Schema ( parseYaml, json2graph ) where
+module Yaml2Schema ( json2graph ) where
 
 import Prelude hiding ((/))
-import Data.List (nub)
 import Data.Text (Text, splitOn, unpack)
 import Data.Yaml (decodeFile)
---import Data.HashMap.Strict (HashMap)
 import Data.Map (Map, toList)
 
-import Network.URI
+import Network.URI (URI(..), URIAuth(..))
 
 import Data.Set (fromList)
 
 import Swish.RDF
---import Swish.Utils.Namespace (ScopedName, makeScopedName)
-import Swish.Namespace
+import Swish.Namespace (ScopedName, makeScopedName)
 import Swish.QName (newLName)
-import Data.Maybe (fromMaybe)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
---import Swish.RDF.TurtleFormatter
 import Swish.RDF.Formatter.Turtle
 
 type TextMap = Map Text
@@ -44,9 +39,6 @@ resolve n = case splitOn ":" n of
   :: (ToRDFLabel s, ToRDFLabel p, ToRDFLabel o) =>
      (s, p) -> o -> RDFTriple
 (a, b) --> c = toRDFTriple a b c
-
-parseYaml :: FilePath -> IO (Maybe MapMap)
-parseYaml = decodeFile
 
 json2graph :: MapMap -> RDFGraph
 json2graph = toRDFGraph . fromList .  json2triples
@@ -84,5 +76,3 @@ main = do
   print g
   putStrLn ""
   putStrLn $ unpack $ formatGraphAsText g
-
--- putStrLn $ ppTopElement $ unode "html" (Attr (unqual "href") "google.com", unode "div" ())
