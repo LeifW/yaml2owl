@@ -55,7 +55,8 @@ data DataProperty = DataProperty
 
 b = putStrLn $ ppElement $ unode "html" [xmlns "foaf" "http://foo.com"]
 
-prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- map getNamespaceTuple $ undefined $ namespaces g ]
+--prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- map getNamespaceTuple $ undefined $ namespaces g ]
+prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- toList $ namespaces g ]
 
 --ex lname = maybe (error $ "Invalid chars in local name: " ++ unpack lname) (makeScopedName (Just "ex") ("example.org"/"scheme#")) $ newLName lname
 
@@ -127,7 +128,7 @@ datatype = attr "datatype"
 --getGraph = fmap (json2graph . fromJust) $ parseYaml "schema.yml" 
 
 label :: Subject -> String
-label = unpack . toLower . getScopeLocal . name
+label = unpack . toLower . getLName . getScopeLocal . name
 
 scaffold :: [Attr] -> Subject -> IO ()
 scaffold prefixes subject = do
@@ -144,4 +145,4 @@ main = do
   let prefixes = prefixesOf g
   let subjects = classInfos g
   mapM_ (scaffold prefixes) subjects
-  putStrLn $ ppElement $ layout g
+  --putStrLn $ ppElement $ layout prefixes undefined
