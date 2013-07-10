@@ -19,7 +19,7 @@ synopsis:            Generate OWL schema from YAML syntax, and an RDFa template.
 -- description:         
 
 -- URL for the project homepage or repository.
-homepage:            http://github.com/leifw/yaml2owl
+homepage:            http://github.com/leifw/SchemaScaffold
 
 -- The license under which the package is released.
 license:             MIT
@@ -44,10 +44,12 @@ cabal-version:       >=1.8
 
 executable yaml2owl
   -- .hs or .lhs file containing the Main module.
-  main-is: Main.hs
+  main-is:             Main.hs
   
   -- Modules included in this executable, other than Main.
-  -- other-modules:       
+  other-modules:       SchemaScaffold, Yaml2Schema
+
+  hs-source-dirs:      src
   
   -- Other library packages from which modules are imported.
   build-depends:       base >= 4.5, text >= 0.10, containers >= 0.4, network >= 2.3, swish >= 0.6, xml >= 1.3, yaml >= 0.8, directory >= 1.1, filepath >= 1.3
