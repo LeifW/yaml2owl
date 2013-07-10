@@ -1,0 +1,7 @@
+Person:
+  name: String
+  age: Int
+  knows: Person
+Cows:
+  name: String
+  udders: Int
