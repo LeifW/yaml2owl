@@ -17,12 +17,7 @@ import Swish.RDF.Query (rdfFindValSubj, rdfFindPredVal)
 import System.Directory
 import System.FilePath( (</>), (<.>) )
 
--- triple Subj Type Class
-
--- putStrLn $ ppTopElement $ unode "html" (Attr (unqual "href") "google.com", unode "div" ())
-
 mkDir = createDirectoryIfMissing True
-
 
 instancesOf = rdfFindValSubj resRdfType
 classesOf = instancesOf resRdfsClass
@@ -54,15 +49,7 @@ classInfos g = map classInfo $ classesOf g
         objectProps' = [ (show p, (unpack . getLName . localName) p)  | p <- objectProperties ]
           
       
---    classInfo klass = Subject (unpack $ toLower $ localName klass) dataProps' objectProps'
-
 localName = getScopeLocal . getScopedName
-
-{-    
-classInfos g = do
-  klass <- classesOf g
-  return klass
--}
 
 layout :: [Attr] -> [Element] -> Element
 layout prefixes content =
@@ -93,7 +80,6 @@ individual (Subject name dataProps objectProps) =
       ])
     | (p, l) <- objectProps ]
   ]
-  --map (unode "span" . property . fst) dataProps)
 
 attr name = Attr (unqual name)
 rel = attr "rel"
@@ -103,8 +89,6 @@ about = attr "about"
 resource = attr "resource"
 property = attr "property"
 datatype = attr "datatype"
-
---getGraph = fmap (json2graph . fromJust) $ parseYaml "schema.yml" 
 
 label :: Subject -> String
 label = unpack . toLower . getLName . getScopeLocal . name

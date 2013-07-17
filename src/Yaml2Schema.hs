@@ -41,7 +41,7 @@ resolve n = case splitOn ":" n of
 (a, b) --> c = toRDFTriple a b c
 
 json2graph :: MapMap -> RDFGraph
-json2graph = toRDFGraph . fromList .  json2triples
+json2graph = toRDFGraph . fromList . json2triples
 
 json2triples :: MapMap -> [RDFTriple]
 json2triples m = do
@@ -61,18 +61,3 @@ props domain (p, r) = [
         "String" -> (xsdString, owlDatatypeProperty)
         "Int" -> (xsdInteger, owlDatatypeProperty)
         other -> (resolve other, owlObjectProperty)
-        
-{--
-do
-  (subject, assertions) <- toList undefined
-  (property, value) <- assertions
-  return subject
---}
--- triple Subj Type Class
-
-main = do
-  m <- decodeFile "schema.yml"::IO (Maybe MapMap)
-  let g = maybe (error "Invalid yaml") json2graph m
-  print g
-  putStrLn ""
-  putStrLn $ unpack $ formatGraphAsText g
