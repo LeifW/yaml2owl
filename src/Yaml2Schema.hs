@@ -4,7 +4,6 @@ module Yaml2Schema ( json2graph ) where
 
 import Prelude hiding ((/))
 import Data.Text (Text, splitOn, unpack)
-import Data.Yaml (decodeFile)
 import Data.Map (Map, toList)
 
 import Network.URI (URI(..), URIAuth(..))
@@ -16,7 +15,6 @@ import Swish.Namespace (ScopedName, makeScopedName)
 import Swish.QName (newLName)
 import Swish.RDF.Vocabulary.XSD
 import Swish.RDF.Vocabulary.OWL
-import Swish.RDF.Formatter.Turtle
 
 type TextMap = Map Text
 type MapMap = TextMap (TextMap Text)
@@ -33,12 +31,6 @@ resolve :: Text -> ScopedName
 resolve n = case splitOn ":" n of
   [name] -> ex name
   [prefix, name] -> error "Not implemented yet"
-
---(a, b) --> c =  a + b - c
-(-->)
-  :: (ToRDFLabel s, ToRDFLabel p, ToRDFLabel o) =>
-     (s, p) -> o -> RDFTriple
-(a, b) --> c = toRDFTriple a b c
 
 json2graph :: MapMap -> RDFGraph
 json2graph = toRDFGraph . fromList . json2triples
