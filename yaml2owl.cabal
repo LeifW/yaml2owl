@@ -16,13 +16,19 @@ version:             0.0.1
 synopsis:            Generate OWL schema from YAML syntax, and an RDFa template.
 
 -- A longer description of the package.
--- description:         
+description:
+  A command-line tool for reading a simplified rough draft of an
+  RDFS/OWL schema in YAML format (example in "examples"),
+  and converting it to an OWL schema serialized as Turtle.
+  Also, makes some RDFa "templates".  This is intended for quick
+  scaffolding of a site that uses RDFa templates to present instance
+  data of RDF.
 
 -- URL for the project homepage or repository.
-homepage:            http://github.com/leifw/SchemaScaffold
-
+homepage:            http://github.com/leifw/yaml2owl
 -- The license under which the package is released.
 license:             LGPL
+license-file:        LICENSE
 
 -- The package author(s).
 author:              Leif Warner
@@ -41,6 +47,9 @@ build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.8
 
+source-repository head
+  type:     git
+  location: https://github.com/LeifW/yaml2owl.git
 
 executable yaml2owl
   -- .hs or .lhs file containing the Main module.
