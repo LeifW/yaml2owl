@@ -22,6 +22,7 @@ type MapMap = TextMap (TextMap Text)
 url :: String -> String -> URI
 url domain path = URI "http:" (Just $ URIAuth "" domain "") ('/':path) "" ""
 
+(/) :: String -> String -> URI
 domain / path = url domain path
 
 ex :: Text -> ScopedName

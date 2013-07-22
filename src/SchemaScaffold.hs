@@ -9,7 +9,7 @@ import Data.Map (toList)
 
 import Swish.RDF
 import Swish.Namespace (ScopedName, getScopeLocal)
-import Swish.QName (getLName)
+import Swish.QName (getLName, LName)
 import Swish.RDF.Vocabulary.OWL
 
 import Swish.RDF.Query (rdfFindValSubj, rdfFindPredVal)
@@ -17,11 +17,16 @@ import Swish.RDF.Query (rdfFindValSubj, rdfFindPredVal)
 import System.Directory
 import System.FilePath( (</>), (<.>) )
 
+mkDir :: FilePath -> IO ()
 mkDir = createDirectoryIfMissing True
 
+instancesOf :: RDFLabel -> RDFGraph -> [RDFLabel]
 instancesOf = rdfFindValSubj resRdfType
+
+classesOf :: RDFGraph -> [RDFLabel]
 classesOf = instancesOf resRdfsClass
 
+xmlns :: String -> String -> Attr
 xmlns prefix = Attr $ QName prefix Nothing (Just "xmlns")
 
 data Subject = Subject {
@@ -30,14 +35,12 @@ data Subject = Subject {
   objectProps :: [(String, String)]
 } deriving (Show, Eq)
 
-data DataProperty = DataProperty 
-
-b = putStrLn $ ppElement $ unode "html" [xmlns "foaf" "http://foo.com"]
-
+prefixesOf :: NSGraph lb -> [Attr]
 prefixesOf g = [ xmlns (unpack p) (show u) | (Just p, u) <- toList $ namespaces g ]
 
-classNames g = [ getScopeLocal sn | Res sn <- classesOf g ]
+--classNames g = [ getScopeLocal sn | Res sn <- classesOf g ]
 
+classInfos :: NSGraph RDFLabel -> [Subject]
 classInfos g = map classInfo $ classesOf g
   where
     classInfo klass = Subject (getScopedName klass) dataProps' objectProps'
@@ -47,8 +50,8 @@ classInfos g = map classInfo $ classesOf g
         (dataProperties, objectProperties) = partition (\p-> elem p graphDataProps) props
         dataProps' = [ (show p, (unpack . getLName . localName) p, show $ head $ rdfFindPredVal p resRdfsRange g) | p <- dataProperties ]
         objectProps' = [ (show p, (unpack . getLName . localName) p)  | p <- objectProperties ]
-          
       
+localName :: RDFLabel -> LName
 localName = getScopeLocal . getScopedName
 
 layout :: [Attr] -> [Element] -> Element
@@ -81,7 +84,10 @@ individual (Subject name dataProps objectProps) =
     | (p, l) <- objectProps ]
   ]
 
+attr :: String -> String -> Attr
 attr name = Attr (unqual name)
+
+rel, rev, href, about, resource, property, datatype :: String -> Attr
 rel = attr "rel"
 rev = attr "rev"
 href = attr "href"
